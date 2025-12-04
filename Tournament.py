@@ -116,13 +116,17 @@ class TournamentWindow(Ui_Tournament, QWidget):
         gf = t.grand_finals
 
         # colonne après le plus large bracket
-        gf_col = max(wb_width, lb_width) // x_spacing + 1
-        gf_x = gf_col * x_spacing
+        gf_col = max(wb_width, lb_width)
+        gf_x = gf_col
         gf_y = top_margin + 100
 
-        gf_item = MatchItem(gf)
-        gf_item.setPos(gf_x, gf_y)
-        self.tournament_scene.addItem(gf_item)
+        x_offset_gf = 0
+        for mat in gf.matches:
+            gf_item = MatchItem(mat)
+            gf_item.setPos(gf_x + x_offset_gf, gf_y)
+            x_offset_gf += x_spacing
+
+            self.tournament_scene.addItem(gf_item)
 
         # Ajuste les bounds de la scène pour occuper toute la view
         self.tournament_scene.setSceneRect(self.tournament_scene.itemsBoundingRect())

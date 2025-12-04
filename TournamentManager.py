@@ -51,10 +51,6 @@ class Match:
         raw["winner"] = self.winner.id if self.winner is not None else 0
         raw["bye"] = self.is_bye
 
-        if self.is_grand_final:
-            raw["reset"] = self.reset
-            raw["reset_winner"] = self.reset_winner.id if self.reset_winner is not None else 0
-
         return raw
 
     def getPlayer1Name(self):
@@ -74,6 +70,22 @@ class Match:
             return '-'
 
         return self.player2.name
+
+
+@dataclass
+class GrandFinals:
+    matches: list[Match]
+    reset: bool
+
+    def export(self):
+        raw: dict = {}
+        raw["matches"] = []
+        raw["reset"] = self.reset
+
+        for mat in self.matches:
+            raw["matches"].append(mat.export())
+
+        return raw
 
 @dataclass
 class Round:
@@ -110,10 +122,9 @@ class Tournament:
     type: str
     brackets: dict[str, Bracket]
     players: list[Player]
-    grand_finals: Match
+    grand_finals: GrandFinals
     all_matches: dict[str, Match]
     ordered_matches: list[Match]
-    gf_reset: bool
     current: Match = None
     last: Match = None
 
@@ -172,11 +183,12 @@ class Tournament:
 
         grand_finals_dict = raw["grand_finals"]
 
-        grand_finals = Tournament._get_match_from_dict(grand_finals_dict, players)
-        gf_reset = grand_finals_dict["reset"]
-        grand_finals.is_grand_final = True
+        grand_finals_matches = Tournament._get_matches_from_dict(grand_finals_dict["matches"], players, all_matches)
+        
+        grand_finals = GrandFinals(grand_finals_matches, grand_finals_dict["reset"])
 
-        all_matches[grand_finals.id] = grand_finals
+        for mat in grand_finals_matches:
+            all_matches[mat.id] = mat
 
         Tournament._link_all_matches(all_matches)
 
@@ -184,7 +196,7 @@ class Tournament:
 
         last, current = Tournament._get_current_match(ordered)
 
-        return Tournament(name, type, brackets, players, grand_finals, all_matches, ordered, gf_reset, current, last)
+        return Tournament(name, type, brackets, players, grand_finals, all_matches, ordered, current, last)
 
 
     @staticmethod
@@ -198,6 +210,8 @@ class Tournament:
 
     @staticmethod
     def _get_match_from_dict(m: dict, players: list[Player]):
+        print(m)
+
         if "player1" in m:
             player1 = Tournament._get_player_from_dict(players, m["player1"])
             player2 = Tournament._get_player_from_dict(players, m["player2"])
@@ -324,7 +338,7 @@ class Tournament:
 
 class TournamentManager:
     TOURNAMENT_DIRECTORY = os.path.join(os.path.abspath(os.path.dirname(__file__)), "Data", "tournaments")
-    DEFAULT_TOURNAMENT = os.path.join(TOURNAMENT_DIRECTORY, "out.yaml")
+    DEFAULT_TOURNAMENT = os.path.join(TOURNAMENT_DIRECTORY, "double_elimination.yaml")
 
     def __init__(self) -> None:
         self.tournament: Tournament = None 

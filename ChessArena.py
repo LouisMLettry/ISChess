@@ -23,6 +23,8 @@ from ParallelPlayer import *
 from Piece import Piece
 from PieceManager import PieceManager
 
+from Tournament import TournamentWindow
+
 from Bots import *
 
 
@@ -30,11 +32,17 @@ from Bots import *
 class ChessApp(QtWidgets.QApplication):
     def __init__(self):
         super().__init__([])
+        self.tournament = None
 
     def start(self):
         arena = ChessArena()
         arena.show()
         arena.start()
+
+        if self.tournament is None:
+            self.tournament = TournamentWindow()
+
+        self.tournament.show()
 
         self.exec()
 
