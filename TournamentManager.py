@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import math
 from typing import Self
 import yaml
 import os
@@ -151,6 +152,186 @@ class Tournament:
 
 
     @staticmethod
+    def from_txt(data: list[str]):
+        name = data[0].strip()
+
+        players_strings = data[1].strip().split(',')
+        players: list[Player] = []
+
+        for i in range(len(players_strings)):
+            player = players_strings[i]
+            players.append(Player(i+1, player))
+
+        n = len(players)
+
+        min_exp = math.ceil(math.log2(n))
+
+        s = 2**min_exp
+
+        b = s - n
+
+        all_matches: dict[str, Match] = {}
+
+        winner_bracket = Bracket("winner", [])
+        loser_bracket = Bracket("loser", [])
+        
+        # ======== Winner bracket ===========
+
+        m_id = 1
+
+        # Round 1
+
+        i = 0
+        winner_bracket.rounds.append(Round(1, []))
+
+        while i < n:
+            if i + 1 < n - b:
+                p1 = players[i]
+                p2 = players[i+1]
+
+                mat = Match(f"W{m_id}", p1, p2, None, None, "", "", None, None, False)
+
+                i += 2
+            
+            else:
+                mat = Match(f"W{m_id}", players[i], 0, None, None, "", "", None, None, True)
+
+                i += 1
+
+
+            all_matches[mat.id] = mat
+            winner_bracket.rounds[0].matches.append(mat)
+            m_id += 1
+
+        # Next rounds
+
+        n_rounds = 2**(min_exp - 2)
+
+        ref_id = 1
+
+        for i in range(1, min_exp):
+            winner_bracket.rounds.append(Round(i + 1, []))
+
+            for _ in range(n_rounds):
+                mat = Match(f"W{m_id}", None, None, None, None, f"winner:W{ref_id}", f"winner:W{ref_id + 1}", None, None, False)
+
+                all_matches[mat.id] = mat
+                winner_bracket.rounds[i].matches.append(mat)
+
+                ref_id += 2
+                m_id += 1
+
+            n_rounds //= 2
+
+
+        # ======== Loser bracket ========
+
+
+        m_id = 1
+
+        ref_id = 1
+
+        l = math.ceil((n - b) / 2)
+        n_matches = math.ceil(l/2)
+
+        loser_bracket.rounds.append(Round(1, []))
+
+        for i in range(n_matches):
+            if i == n_matches - 1 and l % 2 == 1:
+                mat = Match(f"L{m_id}", None, None, None, None, f"loser:W{ref_id}", "", None, None, True)
+
+                ref_id += 1
+
+            else:
+                mat = Match(f"L{m_id}", None, None, None, None, f"loser:W{ref_id}", f"loser:W{ref_id + 1}", None, None, False)
+
+                ref_id += 2
+
+            all_matches[mat.id] = mat
+            loser_bracket.rounds[0].matches.append(mat)
+
+            m_id += 1
+
+        for i in range(1, 2 * (min_exp - 1)):
+            r = i + 1
+
+            loser_bracket.rounds.append(Round(r, []))
+
+            loser_pool: list[str] = [f"winner:{mat.id}" for mat in loser_bracket.rounds[i - 1].matches]
+
+            if r % 2 == 0:
+                winner_idx = (i // 2) + 1
+
+                l = len(loser_bracket.rounds[i - 1].matches) + len(winner_bracket.rounds[winner_idx].matches)
+
+                n_matches = math.ceil(l/2)
+
+                winner_pool: list[str] = [f"loser:{mat.id}" for mat in winner_bracket.rounds[winner_idx].matches]
+        
+                larger_pool = loser_pool if len(loser_pool) >= len(winner_pool) else winner_pool
+                smaller_pool = loser_pool if len(loser_pool) <= len(winner_pool) else winner_pool
+
+                offset = 0
+
+                for j in range(len(smaller_pool)):
+                    mat = Match(f"L{m_id}", None, None, None, None, loser_pool[j], winner_pool[j], None, None, False)
+
+                    all_matches[mat.id] = mat
+                    loser_bracket.rounds[i].matches.append(mat)
+
+                    m_id += 1
+                    offset += 1
+
+                remaining = [larger_pool[j + offset] for j in range(len(larger_pool) - offset)]
+
+                for j in range(len(remaining)):
+                    mat = Match(f"L{m_id}", None, None, None, None, remaining[j], "", None, None, True)
+
+                    all_matches[mat.id] = mat
+                    loser_bracket.rounds[i].matches.append(mat)
+
+                    m_id += 1
+
+            else:
+                for j in range(0, len(loser_pool), 2):
+                    if j + 1 < len(loser_pool):
+                        mat = Match(f"L{m_id}", None, None, None, None, loser_pool[j], loser_pool[j+1], None, None, False)
+                    
+                    else:
+                        mat = Match(f"L{m_id}", None, None, None, None, loser_bracket[j], "", None, None, True)
+
+                    all_matches[mat.id] = mat
+                    loser_bracket.rounds[i].matches.append(mat)
+
+                    m_id += 1
+
+
+        # ======== Grand Finals ========
+
+        gf_mat = Match("GF1", None, None, None, None, f"winner:{winner_bracket.rounds[-1].matches[-1].id}", f"winner:{loser_bracket.rounds[-1].matches[-1].id}", None, None, False, True)
+
+        all_matches[gf_mat.id] = gf_mat
+
+        gf = GrandFinals([gf_mat], True)
+
+        Tournament._link_all_matches(all_matches)
+
+        ordered = Tournament._compute_match_order(all_matches)
+
+        last, current = Tournament._get_current_match(ordered)
+
+        brackets = {
+            "winner": winner_bracket,
+            "loser": loser_bracket
+        }
+
+        return Tournament(name, "double_elimination", brackets, players, gf, all_matches, ordered, current, last)
+
+        
+    #----------------------- YAML ----------------------    
+    
+
+    @staticmethod
     def from_dict(raw: dict):
         name = raw["tournament"]["name"]
         type = raw["tournament"]["type"]
@@ -187,9 +368,6 @@ class Tournament:
         
         grand_finals = GrandFinals(grand_finals_matches, grand_finals_dict["reset"])
 
-        for mat in grand_finals_matches:
-            all_matches[mat.id] = mat
-
         Tournament._link_all_matches(all_matches)
 
         ordered = Tournament._compute_match_order(all_matches)
@@ -209,16 +387,20 @@ class Tournament:
                 return player
 
     @staticmethod
-    def _get_match_from_dict(m: dict, players: list[Player]):
-        print(m)
+    def _get_match_from_dict(m: dict, players: list[Player], gf: bool = False):
+        if gf:
+            return Match(m["id"], None, None, Tournament._get_player_from_dict(players, m["winner"]), None, m["player1_from"], m["player2_from"], None, None, False, True)
 
         if "player1" in m:
             player1 = Tournament._get_player_from_dict(players, m["player1"])
-            player2 = Tournament._get_player_from_dict(players, m["player2"])
-            
+            player2 = Tournament._get_player_from_dict(players, m["player2"]) if not m["bye"] else 0
+
             return Match(m["id"], player1, player2, Tournament._get_player_from_dict(players, m["winner"]), None, "", "", None, None, is_bye=m["bye"])
-            
-        return Match(m["id"], None, None, Tournament._get_player_from_dict(players, m["winner"]), None, m["player1_from"], m["player2_from"], None, None, is_bye=m["bye"])
+
+        if not m["bye"]:
+            return Match(m["id"], None, None, Tournament._get_player_from_dict(players, m["winner"]), None, m["player1_from"], m["player2_from"], None, None, False)
+
+        return Match(m["id"], None, 0, Tournament._get_player_from_dict(players, m["winner"]), None, m["player1_from"], "", None, None, True)
 
     @staticmethod
     def _get_matches_from_dict(matches_dict: list[dict], players: list[Player], all_matches: dict[str, Match]):
@@ -248,7 +430,7 @@ class Tournament:
     def _get_loser_and_link_players(mat: Match):
         if mat.player1 is None:
             player1_key = mat.player1_ref.split(':')[0]
-            player2_key = mat.player2_ref.split(':')[0]
+            player2_key = mat.player2_ref.split(':')[0] if not mat.is_bye else None
 
             if player1_key == "winner":
                 mat.player1 = mat.player1_from.winner
@@ -256,11 +438,15 @@ class Tournament:
             else:
                 mat.player1 = Tournament._get_loser_and_link_players(mat.player1_from)
 
-            if player2_key == "winner":
+            if not mat.is_bye and player2_key == "winner":
                 mat.player2 = mat.player2_from.winner
 
-            else:
+            elif not mat.is_bye:
                 mat.player2 = Tournament._get_loser_and_link_players(mat.player2_from)
+
+        
+        if mat.is_bye:
+            mat.winner = mat.player1
 
         if mat.winner is None or mat.is_bye:
             return None
@@ -269,10 +455,10 @@ class Tournament:
             return mat.loser
 
         if mat.winner is mat.player1:
-            return mat.player1
+            return mat.player2
 
         if mat.winner is mat.player2:
-            return mat.player2
+            return mat.player1
 
     @staticmethod
     def _link_all_matches(all_matches: dict[str, Match]):
@@ -281,7 +467,12 @@ class Tournament:
 
             if mat.player1_ref != "":
                 key1, mat1 = Tournament._parse_player_origin(mat.player1_ref, all_matches)
-                key2, mat2 = Tournament._parse_player_origin(mat.player2_ref, all_matches)
+
+                if mat.player2_ref != "":
+                    key2, mat2 = Tournament._parse_player_origin(mat.player2_ref, all_matches)
+
+                else:
+                    mat2 = None
 
                 mat.player1_from = mat1
                 mat.player2_from = mat2
@@ -294,7 +485,7 @@ class Tournament:
     @staticmethod
     def _compute_match_order(all_matches: dict[str, Match]):
         ordered: list[Match] = [m for m in all_matches.values() if m.player1_ref == ""]
-        remaining = [m for m in all_matches.values() if m.player1_ref != ""]
+        remaining: list[Match] = [m for m in all_matches.values() if m.player1_ref != ""]
 
         while remaining:
             progress = False
@@ -338,21 +529,44 @@ class Tournament:
 
 class TournamentManager:
     TOURNAMENT_DIRECTORY = os.path.join(os.path.abspath(os.path.dirname(__file__)), "Data", "tournaments")
-    DEFAULT_TOURNAMENT = os.path.join(TOURNAMENT_DIRECTORY, "double_elimination.yaml")
+    DEFAULT_TOURNAMENT = os.path.join(TOURNAMENT_DIRECTORY, "double_elimination.txt")
 
     def __init__(self) -> None:
         self.tournament: Tournament = None 
         self.path: Optional[str] = None
         self.load_file(self.DEFAULT_TOURNAMENT)
 
-        print([m.id for m in self.tournament.ordered_matches])
-
     def load_file(self, path):
-        with open(path, 'r') as f:
-            raw = yaml.load(f, Loader=yaml.SafeLoader)
-            self.tournament = Tournament.from_dict(raw)
+        if path.strip() == "":
+            return False
 
-        return True
+        if not os.path.exists(path):
+            print(f"File '{path}' not found")
+            return False
+
+        if not os.path.isfile(path):
+            print(f"'{path}' is not a file")
+            return False
+
+        ext = os.path.splitext(path)[1]
+
+        if ext not in (".yaml", ".txt"):
+            print(f"Unsupported extension '{ext}'")
+            return False
+
+        if ext == ".yaml":
+            with open(path, 'r') as f:
+                raw = yaml.load(f, Loader=yaml.SafeLoader)
+                self.tournament = Tournament.from_dict(raw)
+            
+            return True
+
+        if ext == ".txt":
+            with open(path, 'r') as f:
+                data = f.readlines()
+                self.tournament = Tournament.from_txt(data)
+
+            return True
 
     def export(self, path):
         raw = self.tournament.export()

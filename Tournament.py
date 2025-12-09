@@ -11,11 +11,12 @@ from Data.tournament import Ui_Tournament
 from TournamentManager import Match, TournamentManager
 
 class MatchItem(QGraphicsItem):
+    width = 160
+    height = 60
+    
     def __init__(self, match: Match):
         super().__init__()
         self.match = match
-        self.width = 160
-        self.height = 60
 
     def boundingRect(self):
         return QRectF(0, 0, self.width, self.height)
@@ -75,9 +76,14 @@ class TournamentWindow(Ui_Tournament, QWidget):
 
         t = self.tournamentManager.tournament
 
-        x_spacing = 260
-        y_spacing = 120
+        x_spacing = 200
+        y_spacing = MatchItem.height + 40
         top_margin = 40
+
+        rows = 1
+        max_rows = 1
+
+        
 
         # --- Winners Bracket -----------------------------------------------------
         if "winner" in t.brackets:
@@ -90,13 +96,21 @@ class TournamentWindow(Ui_Tournament, QWidget):
                     item.setPos(x, y)
                     self.tournament_scene.addItem(item)
 
+                    rows += 1
+
+                if rows > max_rows:
+                    max_rows = rows
+
+                rows = 1
+
             wb_width = len(wb.rounds) * x_spacing
         else:
             wb_width = 0
 
         # --- Losers Bracket ------------------------------------------------------
         # On place le LB en dessous du WB avec un gros offset vertical
-        lb_vertical_offset = 300
+        max_matches_in_wb = max_rows - 1
+        lb_vertical_offset = (max_matches_in_wb + 2) * y_spacing
 
         if "loser" in t.brackets:
             lb = t.brackets["loser"]
@@ -118,7 +132,7 @@ class TournamentWindow(Ui_Tournament, QWidget):
         # colonne après le plus large bracket
         gf_col = max(wb_width, lb_width)
         gf_x = gf_col
-        gf_y = top_margin + 100
+        gf_y = top_margin + max_matches_in_wb * y_spacing
 
         x_offset_gf = 0
         for mat in gf.matches:
