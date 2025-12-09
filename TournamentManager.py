@@ -41,13 +41,22 @@ class Match:
         raw: dict = {}
         raw["id"] = self.id
 
-        if self.player1_ref == "":
+        if self.player1_ref == "" and not self.is_bye:
             raw["player1"] = self.player1.id
             raw["player2"] = self.player2.id
 
-        else:
+        elif self.player1_ref == "" and self.is_bye:
+            raw["player1"] = self.player1.id
+            raw["player2"] = 0
+
+        elif self.player1_ref != "" and not self.is_bye:
             raw["player1_from"] = self.player1_ref
             raw["player2_from"] = self.player2_ref
+
+        else:
+            raw["player1_from"] = self.player1_ref
+            raw["player2_from"] = ""
+            
 
         raw["winner"] = self.winner.id if self.winner is not None else 0
         raw["bye"] = self.is_bye
@@ -529,7 +538,7 @@ class Tournament:
 
 class TournamentManager:
     TOURNAMENT_DIRECTORY = os.path.join(os.path.abspath(os.path.dirname(__file__)), "Data", "tournaments")
-    DEFAULT_TOURNAMENT = os.path.join(TOURNAMENT_DIRECTORY, "double_elimination.txt")
+    DEFAULT_TOURNAMENT = os.path.join(TOURNAMENT_DIRECTORY, "test.yaml")
 
     def __init__(self) -> None:
         self.tournament: Tournament = None 

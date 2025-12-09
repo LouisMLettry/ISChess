@@ -28,6 +28,7 @@
     </property>
     <addaction name="actionLoad"/>
     <addaction name="actionReset"/>
+    <addaction name="actionExport"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -47,6 +48,14 @@
     <string>Reset tournament</string>
    </property>
   </action>
+  <action name="actionExport">
+   <property name="text">
+    <string>Export</string>
+   </property>
+   <property name="statusTip">
+    <string>Export tournament</string>
+   </property>
+  </action>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
@@ -62,6 +71,13 @@
        <widget class="QPushButton" name="resetButton">
         <property name="text">
          <string>Reset</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="exportButton">
+        <property name="text">
+         <string>Export</string>
         </property>
        </widget>
       </item>

@@ -1,11 +1,10 @@
 
 
 
-from PyQt6 import uic
+import os
 from PyQt6.QtCore import QRectF
 from PyQt6.QtGui import QColor, QPainter
-from PyQt6.QtWidgets import QGraphicsItem, QGraphicsScene, QStyleOptionGraphicsItem, QVBoxLayout, QWidget
-from PyQt6.uic.uiparser import QtWidgets
+from PyQt6.QtWidgets import QFileDialog, QGraphicsItem, QGraphicsScene, QStyleOptionGraphicsItem, QVBoxLayout, QWidget
 
 from Data.tournament import Ui_Tournament
 from TournamentManager import Match, TournamentManager
@@ -35,10 +34,13 @@ class MatchItem(QGraphicsItem):
 
 
 class TournamentWindow(Ui_Tournament, QWidget):
+    PROJECT_DIR = os.path.abspath(os.path.dirname(__file__))
+    TOURNAMENTS_DIR = os.path.join(PROJECT_DIR, "Data", "tournaments")
+
     def __init__(self):
         super().__init__()
 
-        uic.loadUi("Data/tournament.ui", self)
+        self.setupUi(self)
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.centralWidget)
@@ -47,11 +49,10 @@ class TournamentWindow(Ui_Tournament, QWidget):
         self.tournament_scene = QGraphicsScene()
         self.tournamentView.setScene(self.tournament_scene)
 
-    
-
         # Tournament actions
         self.actionLoad.triggered.connect(self.select_and_load_tournament)
         self.actionReset.triggered.connect(self.reset_tournament)
+        self.actionExport.triggered.connect(self.export_tournament)
 
         self.tournamentManager = TournamentManager()
 
@@ -59,8 +60,8 @@ class TournamentWindow(Ui_Tournament, QWidget):
 
     def select_and_load_tournament(self):
         """Open tournament file selector and load the selected file"""
-        path = QtWidgets.QFileDialog.getOpenFileName(
-            self, "Select tournament", self.BOARDS_DIR, "Board File (*.trn)"
+        path = QFileDialog.getOpenFileName(
+            self, "Select tournament", self.TOURNAMENTS_DIR, "Tournament File (*.yaml, *.txt)"
         )
 
         if path is None:
@@ -69,7 +70,7 @@ class TournamentWindow(Ui_Tournament, QWidget):
 
         if self.tournamentManager.load_file(path):
             self.setup_view()
-            self.show_status("Tournament loaded")
+            # self.show_status("Tournament loaded")
 
     def setup_view(self):
         self.tournament_scene.clear()
@@ -145,5 +146,20 @@ class TournamentWindow(Ui_Tournament, QWidget):
         # Ajuste les bounds de la scène pour occuper toute la view
         self.tournament_scene.setSceneRect(self.tournament_scene.itemsBoundingRect())
 
+    def export_tournament(self):
+        """Open the export file selector and save the board"""
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save tournament as ...",
+            self.TOURNAMENTS_DIR,
+            "Tournament configuration file (*.yaml)",
+        )
+        if path == "":
+            return
+
+        # self.show_status("Tournament exported")
+        self.tournamentManager.export(path)
+
     def reset_tournament(self):
+        print("Reset tournament action triggered.")
         pass
