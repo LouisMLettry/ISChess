@@ -4,33 +4,43 @@
 import os
 from PyQt6.QtCore import QRectF
 from PyQt6.QtGui import QColor, QPainter
-from PyQt6.QtWidgets import QFileDialog, QGraphicsItem, QGraphicsScene, QStyleOptionGraphicsItem, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QFileDialog, QGraphicsItem, QGraphicsScene, QPushButton, QStyleOptionGraphicsItem, QVBoxLayout, QWidget
 
 from Data.tournament import Ui_Tournament
-from TournamentManager import Match, TournamentManager
+from TournamentManager import Match, Tournament, TournamentManager
 
 class MatchItem(QGraphicsItem):
     width = 160
-    height = 60
+    height = 70
+    gap = 6
     
-    def __init__(self, match: Match):
+    def __init__(self, match: Match, tournament: Tournament):
         super().__init__()
-        self.match = match
+        self.match: Match = match
+        self.tournament: Tournament = tournament
 
     def boundingRect(self):
         return QRectF(0, 0, self.width, self.height)
 
     def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: QWidget = ...) -> None:
         painter.setBrush(QColor(110, 110, 110))
-        painter.setPen(QColor(199, 255, 255))
 
-        painter.drawRect(self.boundingRect())
+        if self.match.is_bye:
+            painter.setPen(QColor(199, 255, 255))
+
+        if self.match is self.tournament.current:
+            painter.setPen(QColor(255, 0, 0))
+
+        h = (self.height - self.gap) // 2
+
+        painter.drawRect(QRectF(0, 0, self.width, h))
+        painter.drawRect(QRectF(0, h + 3, self.width, h))
 
         p1 = self.match.getPlayer1Name()
         p2 = self.match.getPlayer2Name()
 
-        painter.drawText(10, 20, p1)
-        painter.drawText(10, 40, p2)
+        painter.drawText(10, h//2, p1)
+        painter.drawText(10, h + self.gap + h//2, p2)
 
 
 class TournamentWindow(Ui_Tournament, QWidget):
@@ -45,6 +55,12 @@ class TournamentWindow(Ui_Tournament, QWidget):
         layout = QVBoxLayout(self)
         layout.addWidget(self.centralWidget)
 
+        self.testbtn = QPushButton(self)
+
+        self.testbtn.clicked.connect(self.testwin) 
+
+        layout.addWidget(self.testbtn)
+
         # Render for tournament
         self.tournament_scene = QGraphicsScene()
         self.tournamentView.setScene(self.tournament_scene)
@@ -57,6 +73,9 @@ class TournamentWindow(Ui_Tournament, QWidget):
         self.tournamentManager = TournamentManager()
 
         self.setup_view()
+
+    def testwin(self):
+        self.tournamentManager.tournament.setWinnerAndNext(self.tournamentManager.tournament.current.player1)
 
     def select_and_load_tournament(self):
         """Open tournament file selector and load the selected file"""
@@ -90,8 +109,9 @@ class TournamentWindow(Ui_Tournament, QWidget):
         if "winner" in t.brackets:
             wb = t.brackets["winner"]
             for col, rnd in enumerate(wb.rounds):
-                for row, match in enumerate(rnd.matches):
-                    item = MatchItem(match)
+                for row, mat in enumerate(rnd.matches):
+                    item = MatchItem(mat, self.tournamentManager.tournament)
+                    mat.item = item
                     x = col * x_spacing
                     y = top_margin + row * y_spacing
                     item.setPos(x, y)
@@ -116,8 +136,9 @@ class TournamentWindow(Ui_Tournament, QWidget):
         if "loser" in t.brackets:
             lb = t.brackets["loser"]
             for col, rnd in enumerate(lb.rounds):
-                for row, match in enumerate(rnd.matches):
-                    item = MatchItem(match)
+                for row, mat in enumerate(rnd.matches):
+                    item = MatchItem(mat, self.tournamentManager.tournament)
+                    mat.item = item
                     x = col * x_spacing
                     y = top_margin + lb_vertical_offset + row * y_spacing
                     item.setPos(x, y)
@@ -137,7 +158,8 @@ class TournamentWindow(Ui_Tournament, QWidget):
 
         x_offset_gf = 0
         for mat in gf.matches:
-            gf_item = MatchItem(mat)
+            gf_item = MatchItem(mat, self.tournamentManager.tournament)
+            mat.item = gf_item
             gf_item.setPos(gf_x + x_offset_gf, gf_y)
             x_offset_gf += x_spacing
 

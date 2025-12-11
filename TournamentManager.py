@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import math
 from typing import Self
+from PyQt6.QtWidgets import QGraphicsItem
 import yaml
 import os
 
@@ -31,11 +32,16 @@ class Match:
     player1_from: Self | None
     player2_from: Self | None
 
+    winner_to: Self | None = None
+    loser_to: Self | None = None
+
     is_bye: bool = False
 
     is_grand_final: bool = False
 
     order: int = 0
+
+    item: QGraphicsItem = None
 
     def export(self):
         raw: dict = {}
@@ -80,6 +86,15 @@ class Match:
             return '-'
 
         return self.player2.name
+
+    def setWinner(self, player: Player):
+        if self.player1 is player:
+            self.winner = self.player1
+            self.loser = self.player2
+
+        else:
+            self.winner = self.player2
+            self.loser = self.player1
 
 
 @dataclass
@@ -158,6 +173,37 @@ class Tournament:
         raw["grand_finals"] = self.grand_finals.export()
 
         return raw
+
+    def setWinnerAndNext(self, player: Player):
+        self.current.setWinner(player)
+        
+        idx = self.ordered_matches.index(self.current) + 1
+
+        self.last = self.current
+
+        while idx < len(self.ordered_matches):
+            if self.ordered_matches[idx].is_bye:
+                idx += 1
+                continue
+
+            self.current = self.ordered_matches[idx]
+            break
+        
+        if self.current.player1 is None or self.current.player2 is None:
+            Tournament._get_loser_and_link_players(self.current)
+
+        self.current.item.update()
+        self.last.item.update()
+
+        if self.last.winner_to is not None:
+            Tournament._get_loser_and_link_players(self.last.winner_to)
+            self.last.winner_to.item.update()
+
+        if self.last.loser_to is not None:
+            Tournament._get_loser_and_link_players(self.last.loser_to)
+            self.last.loser_to.item.update()
+
+        print(f"Match {self.last.id} has been won by {player.name}. Current match is now {self.current.id}")
 
 
     @staticmethod
@@ -373,7 +419,7 @@ class Tournament:
 
         grand_finals_dict = raw["grand_finals"]
 
-        grand_finals_matches = Tournament._get_matches_from_dict(grand_finals_dict["matches"], players, all_matches)
+        grand_finals_matches = Tournament._get_matches_from_dict(grand_finals_dict["matches"], players, all_matches, gf=True)
         
         grand_finals = GrandFinals(grand_finals_matches, grand_finals_dict["reset"])
 
@@ -382,6 +428,13 @@ class Tournament:
         ordered = Tournament._compute_match_order(all_matches)
 
         last, current = Tournament._get_current_match(ordered)
+        
+        for mat in ordered:
+            print(f"===={mat.id}====")
+
+            print(mat.winner_to.id if mat.winner_to is not None else None)
+            print(mat.loser_to.id if mat.loser_to is not None else None)
+            print()
 
         return Tournament(name, type, brackets, players, grand_finals, all_matches, ordered, current, last)
 
@@ -398,7 +451,7 @@ class Tournament:
     @staticmethod
     def _get_match_from_dict(m: dict, players: list[Player], gf: bool = False):
         if gf:
-            return Match(m["id"], None, None, Tournament._get_player_from_dict(players, m["winner"]), None, m["player1_from"], m["player2_from"], None, None, False, True)
+            return Match(m["id"], None, None, Tournament._get_player_from_dict(players, m["winner"]), None, m["player1_from"], m["player2_from"], None, None, is_grand_final=True)
 
         if "player1" in m:
             player1 = Tournament._get_player_from_dict(players, m["player1"])
@@ -407,16 +460,16 @@ class Tournament:
             return Match(m["id"], player1, player2, Tournament._get_player_from_dict(players, m["winner"]), None, "", "", None, None, is_bye=m["bye"])
 
         if not m["bye"]:
-            return Match(m["id"], None, None, Tournament._get_player_from_dict(players, m["winner"]), None, m["player1_from"], m["player2_from"], None, None, False)
+            return Match(m["id"], None, None, Tournament._get_player_from_dict(players, m["winner"]), None, m["player1_from"], m["player2_from"], None, None)
 
-        return Match(m["id"], None, 0, Tournament._get_player_from_dict(players, m["winner"]), None, m["player1_from"], "", None, None, True)
+        return Match(m["id"], None, 0, Tournament._get_player_from_dict(players, m["winner"]), None, m["player1_from"], "", None, None, is_bye=True)
 
     @staticmethod
-    def _get_matches_from_dict(matches_dict: list[dict], players: list[Player], all_matches: dict[str, Match]):
+    def _get_matches_from_dict(matches_dict: list[dict], players: list[Player], all_matches: dict[str, Match], gf: bool = False):
         matches: list[Match] = []
 
         for m in matches_dict:
-            mat = Tournament._get_match_from_dict(m, players)
+            mat = Tournament._get_match_from_dict(m, players, gf)
 
             matches.append(mat)
             all_matches[mat.id] = mat
@@ -437,15 +490,17 @@ class Tournament:
 
     @staticmethod
     def _get_loser_and_link_players(mat: Match):
-        if mat.player1 is None:
+        if mat.player1 is None or mat.player2 is None:
             player1_key = mat.player1_ref.split(':')[0]
-            player2_key = mat.player2_ref.split(':')[0] if not mat.is_bye else None
 
             if player1_key == "winner":
                 mat.player1 = mat.player1_from.winner
 
             else:
                 mat.player1 = Tournament._get_loser_and_link_players(mat.player1_from)
+
+        if mat.player2 is None:
+            player2_key = mat.player2_ref.split(':')[0] if not mat.is_bye else None
 
             if not mat.is_bye and player2_key == "winner":
                 mat.player2 = mat.player2_from.winner
@@ -482,9 +537,23 @@ class Tournament:
 
                 else:
                     mat2 = None
+                    key2 = None
 
                 mat.player1_from = mat1
                 mat.player2_from = mat2
+
+                if key1 == "winner":
+                    mat.player1_from.winner_to = mat
+
+                else:
+                    mat.player1_from.loser_to = mat
+
+                if key2 is not None:
+                    if key2 == "winner":
+                        mat.player2_from.winner_to = mat
+
+                    else:
+                        mat.player2_from.loser_to = mat
         
         for match_id in all_matches:
             mat = all_matches[match_id]
