@@ -196,9 +196,6 @@ class Tournament:
         widget1: BotWidget = players[0].widget
         widget2: BotWidget = players[1].widget
         
-        print(self.current.player1.name)
-        print(self.current.player2.name)
-
         widget1.playerBot.setCurrentText(self.current.player1.name)
         widget2.playerBot.setCurrentText(self.current.player2.name)
 
@@ -481,13 +478,6 @@ class Tournament:
 
         last, current = Tournament._get_current_match(ordered)
         
-        for mat in ordered:
-            print(f"===={mat.id}====")
-
-            print(mat.winner_to.id if mat.winner_to is not None else None)
-            print(mat.loser_to.id if mat.loser_to is not None else None)
-            print()
-
         return Tournament(name, type, brackets, players, grand_finals, all_matches, ordered, current, last)
 
 
@@ -679,7 +669,7 @@ class Tournament:
 
 class TournamentManager:
     TOURNAMENT_DIRECTORY = os.path.join(os.path.abspath(os.path.dirname(__file__)), "Data", "tournaments")
-    DEFAULT_TOURNAMENT = os.path.join(TOURNAMENT_DIRECTORY, "double_elimination.txt")
+    DEFAULT_TOURNAMENT = os.path.join(TOURNAMENT_DIRECTORY, "double_elimination.yaml")
 
     def __init__(self) -> None:
         self.tournament: Tournament = None 

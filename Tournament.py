@@ -92,6 +92,8 @@ class TournamentWindow(Ui_Tournament, QWidget):
         path = path[0]
 
         if self.tournamentManager.load_file(path):
+            self.tournamentManager.tournament.arena = self.arena
+            self.tournamentManager.tournament.view = self
             self.setup_view()
             # self.show_status("Tournament loaded")
 
