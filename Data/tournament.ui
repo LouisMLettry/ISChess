@@ -29,6 +29,7 @@
     <addaction name="actionLoad"/>
     <addaction name="actionReset"/>
     <addaction name="actionExport"/>
+    <addaction name="actionStart"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -56,10 +57,25 @@
     <string>Export tournament</string>
    </property>
   </action>
+  <action name="actionStart">
+   <property name="text">
+    <string>Start></string>
+   </property>
+   <property name="statusTip">
+    <string>Start match</string>
+   </property>
+  </action>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <layout class="QHBoxLayout" name="topButtons">
+      <item>
+       <widget class="QPushButton" name="startButton">
+        <property name="text">
+         <string>Start</string>
+        </property>
+       </widget>
+      </item>
       <item>
        <widget class="QPushButton" name="loadButton">
         <property name="text">
@@ -80,19 +96,6 @@
          <string>Export</string>
         </property>
        </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
       </item>
      </layout>
     </item>

@@ -20,8 +20,9 @@ class MatchItem(QGraphicsItem):
     h = (h_match - gap) // 2
     s_idx = h
     s_score = h
+    w_mid = h
 
-    width = w_name + s_idx + s_score
+    width = w_name + s_idx + s_score + w_mid
     height = h_match + gap
 
     background_color: QColor = QColor(99, 98, 99)
@@ -31,6 +32,7 @@ class MatchItem(QGraphicsItem):
     text_color: QColor =  QColor(220, 220, 220)
     text_color2: QColor = QColor(88, 87, 88)
     winner_color: QColor =  QColor(66, 244, 192)
+    current_color: QColor = QColor(218, 48, 102)
     
     def __init__(self, match: Match, tournament: Tournament):
         super().__init__()
@@ -44,6 +46,14 @@ class MatchItem(QGraphicsItem):
         p1, id1, win1 = self.match.getPlayer1Infos()
         p2, id2, win2 = self.match.getPlayer2Infos()
 
+        flags = Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter
+
+        painter.setPen(self.text_color2)
+
+        mid_rect = QRectF(0, 0, self.w_mid, self.height)
+        painter.drawText(mid_rect, flags, self.match.id)
+
+
         self._paint_part(painter, p1, id1, win1)
         self._paint_part(painter, p2, id2, win2, True)
 
@@ -55,7 +65,15 @@ class MatchItem(QGraphicsItem):
         if alive:
             id_rect_color = self.background_color2
             name_rect_color = self.background_color
-            s_rect_color = self.winner_color if win else self.background_color2
+
+            if win:
+                s_rect_color = self.winner_color
+
+            elif self.match is self.tournament.current:
+                s_rect_color = self.current_color
+
+            else:
+                s_rect_color = self.background_color2
 
             name_color = self.text_color
             s_color = self.text_color2 if win else self.text_color
@@ -73,19 +91,19 @@ class MatchItem(QGraphicsItem):
         painter.setBrush(id_rect_color)
         painter.setPen(id_rect_color)
 
-        id_rect = QRectF(0, y_pos, self.s_idx, self.s_idx)
+        id_rect = QRectF(self.w_mid, y_pos, self.s_idx, self.s_idx)
         painter.drawRect(id_rect)
 
         painter.setBrush(name_rect_color)
         painter.setPen(name_rect_color)
 
-        name_rect = QRectF(self.s_idx, y_pos, self.w_name, self.h)
+        name_rect = QRectF(self.s_idx + self.w_mid, y_pos, self.w_name, self.h)
         painter.drawRect(name_rect)
 
         painter.setBrush(s_rect_color)
         painter.setPen(s_rect_color)
 
-        s_rect = QRectF(self.s_idx + self.w_name, y_pos, self.s_score, self.s_score)
+        s_rect = QRectF(self.s_idx + self.w_mid + self.w_name, y_pos, self.s_score, self.s_score)
         painter.drawRect(s_rect)
         
         flags = Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter
@@ -99,7 +117,7 @@ class MatchItem(QGraphicsItem):
         flags = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
 
         painter.setPen(name_color)
-        painter.drawText(QRectF(self.s_idx + self.w_padding, y_pos, self.w_name - self.w_padding, self.h), flags, name)
+        painter.drawText(QRectF(self.s_idx + self.w_mid + self.w_padding, y_pos, self.w_name - self.w_padding, self.h), flags, name)
 
 
     def _is_alive(self, player: Player):
@@ -141,6 +159,7 @@ class TournamentWindow(Ui_Tournament, QWidget):
         self.tournamentView.setScene(self.tournament_scene)
 
         # Tournament actions
+        self.actionStart.triggered.connect(self.startMatch)
         self.actionLoad.triggered.connect(self.select_and_load_tournament)
         self.actionReset.triggered.connect(self.reset_tournament)
         self.actionExport.triggered.connect(self.export_tournament)
@@ -152,6 +171,9 @@ class TournamentWindow(Ui_Tournament, QWidget):
         self.gf_reset_item = None
 
         self.setup_view()
+
+    def startMatch(self):
+        self.arena.game_manager.reload()
 
     def testwin(self):
         players = (self.tournamentManager.tournament.current.player1, self.tournamentManager.tournament.current.player2)

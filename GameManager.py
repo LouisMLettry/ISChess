@@ -420,9 +420,16 @@ class GameManager:
 
         return True
 
-    def reload_board(self):
+    def reload(self):
         """Resets the board and UI for the next tournament match"""
+        
+        if self.auto_playing:
+            self.stop()
+
         self.arena.reloadBoard.click()
+        self.arena.setup_players()
+
+        self.tournamentManager.tournament.setBots()
 
     def check_game_end(self):
         board = self.current_player_board
@@ -444,5 +451,3 @@ class GameManager:
         if self.tournament_mode:
             tournament = self.tournamentManager.tournament
             tournament.setWinnerAndNext(tournament.current.player1 if current_color == "w" else tournament.current.player2)
-
-            QTimer.singleShot(0, self.reload_board) # Next event

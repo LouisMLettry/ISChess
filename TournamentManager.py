@@ -724,7 +724,7 @@ class Tournament:
 
 class TournamentManager:
     TOURNAMENT_DIRECTORY = os.path.join(os.path.abspath(os.path.dirname(__file__)), "Data", "tournaments")
-    DEFAULT_TOURNAMENT = os.path.join(TOURNAMENT_DIRECTORY, "double_elimination.yaml")
+    DEFAULT_TOURNAMENT = os.path.join(TOURNAMENT_DIRECTORY, "double_elimination.txt")
 
     def __init__(self) -> None:
         self.tournament: Tournament = None 
