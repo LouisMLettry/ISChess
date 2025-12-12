@@ -394,9 +394,7 @@ class GameManager:
         board[start[0], start[1]] = ""
 
         if type(end_piece) is Piece:
-            print("longueur avant : ", len(self.board_manager.pieces))
             self.board_manager.pieces = [p for p in self.board_manager.pieces if p is not end_piece]
-            print("longueur après : ", len(self.board_manager.pieces))
 
             self.arena.remove_piece(end_piece)
         
