@@ -187,6 +187,7 @@ class TournamentWindow(Ui_Tournament, QWidget):
         self.tournamentView.setScene(self.tournament_scene)
         self.tournamentView.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.tournamentView.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+        self.tournamentView.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
 
         self.tournamentView.viewport().installEventFilter(self)
 
