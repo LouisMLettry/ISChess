@@ -58,6 +58,8 @@ class ChessArena(Ui_MainWindow, QMainWindow):
         if self.tournament is None:
             self.tournament = TournamentWindow(self)
 
+        self.msg_box: Optional[QMessageBox] = None
+
         # Render for chess board
         self.chess_scene = QtWidgets.QGraphicsScene()
         self.chessboardView.setScene(self.chess_scene)
@@ -287,10 +289,10 @@ class ChessArena(Ui_MainWindow, QMainWindow):
         :param message: The message to display
         :param title: The modal's title
         """
-        msgbox = QMessageBox(self)
-        msgbox.setWindowTitle(title)
-        msgbox.setText(message)
-        msgbox.open()
+        self.msg_box = QMessageBox(self)
+        self.msg_box.setWindowTitle(title)
+        self.msg_box.setText(message)
+        self.msg_box.open()
 
     def show_status(self, message: str, duration: int = 3000):
         """

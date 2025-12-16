@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import math
-from typing import List, Optional, TYPE_CHECKING, Tuple
+from typing import Optional, TYPE_CHECKING
 
 import numpy as np
 from PyQt6.QtCore import QTimer
@@ -282,8 +281,15 @@ class GameManager:
         """
         Start a series of turns
 
-        :return: ``True`` if successful, ``False`` if the number of turns to play is <= 0 or if already autoplaying
+        :return: ``True`` if successful, ``False`` if the number of turns to play is <= 0, if already autoplaying or
+        if tournament mode is on and the tournament has already ended.
         """
+        if self.tournament_mode and self.tournamentManager.tournament.won:
+            self.arena.show_message(
+                f"Cannot start auto-playing, tournament has already been won."
+            )
+            return False
+
         self.nbr_turn_to_play = self.arena.autoMovesCount.value()
         if self.nbr_turn_to_play <= 0:
             self.arena.show_message(
@@ -431,6 +437,19 @@ class GameManager:
 
         self.tournamentManager.tournament.setBots()
 
+    def reload_and_start(self):
+        """Resets the board and UI and starts the next tournament match"""
+
+        if self.arena.msg_box is not None:
+            self.arena.msg_box.close()
+            self.arena.msg_box = None
+
+        if self.auto_playing:
+            self.stop()
+
+        self.reload()
+        self.start()
+
     def check_game_end(self):
         board = self.current_player_board
         current_color = self.current_player_color
@@ -451,3 +470,6 @@ class GameManager:
         if self.tournament_mode:
             tournament = self.tournamentManager.tournament
             tournament.setWinnerAndNext(tournament.current.player1 if current_color == "w" else tournament.current.player2)
+
+            if not tournament.won:
+                QTimer.singleShot(5000, self.reload_and_start)

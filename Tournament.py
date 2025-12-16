@@ -3,9 +3,9 @@
 
 import os
 import random
-from PyQt6.QtCore import QLineF, QPointF, QRectF, Qt
+from PyQt6.QtCore import QEvent, QLineF, QPointF, QRectF, Qt
 from PyQt6.QtGui import QColor, QPainter
-from PyQt6.QtWidgets import QFileDialog, QGraphicsItem, QGraphicsLineItem, QGraphicsScene, QPushButton, QStyleOptionGraphicsItem, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QFileDialog, QGraphicsView, QGraphicsItem, QGraphicsScene, QGraphicsSceneMouseEvent, QPushButton, QStyleOptionGraphicsItem, QVBoxLayout, QWidget
 
 from Data.tournament import Ui_Tournament
 from TournamentManager import Match, Player, Tournament, TournamentManager
@@ -33,11 +33,15 @@ class MatchItem(QGraphicsItem):
     text_color2: QColor = QColor(88, 87, 88)
     winner_color: QColor =  QColor(66, 244, 192)
     current_color: QColor = QColor(218, 48, 102)
+    selected_color: QColor = QColor(20, 140, 100)
     
     def __init__(self, match: Match, tournament: Tournament):
         super().__init__()
+
         self.match: Match = match
         self.tournament: Tournament = tournament
+
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, True)
 
     def boundingRect(self):
         return QRectF(0, 0, self.width, self.height)
@@ -60,7 +64,6 @@ class MatchItem(QGraphicsItem):
 
         mid_rect = QRectF(0, 0, self.w_mid, self.height)
         painter.drawText(mid_rect, flags, self.match.id)
-
 
         self._paint_part(painter, p1, id1, win1)
         self._paint_part(painter, p2, id2, win2, True)
@@ -94,6 +97,10 @@ class MatchItem(QGraphicsItem):
             name_color = self.text_color2
             s_color = self.text_color2
 
+        if self.isSelected():
+            s_color = self.text_color
+            s_rect_color = self.selected_color
+
         id_color = self.text_color2
 
         painter.setBrush(id_rect_color)
@@ -126,6 +133,10 @@ class MatchItem(QGraphicsItem):
 
         painter.setPen(name_color)
         painter.drawText(QRectF(self.s_idx + self.w_mid + self.w_padding, y_pos, self.w_name - self.w_padding, self.h), flags, name)
+
+
+    def mousePressEvent(self, event: QGraphicsSceneMouseEvent | None):
+        return super().mousePressEvent(event)
 
 
     def _is_alive(self, player: Player):
@@ -165,6 +176,10 @@ class TournamentWindow(Ui_Tournament, QWidget):
         # Render for tournament
         self.tournament_scene = QGraphicsScene()
         self.tournamentView.setScene(self.tournament_scene)
+        self.tournamentView.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+        self.tournamentView.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+
+        self.tournamentView.viewport().installEventFilter(self)
 
         # Tournament actions
         self.actionStart.triggered.connect(self.startMatch)
@@ -183,8 +198,19 @@ class TournamentWindow(Ui_Tournament, QWidget):
 
         self.setup_view()
 
+    def eventFilter(self, source, event):
+        if (source is self.tournamentView.viewport() and
+                event.type() == QEvent.Type.Wheel):
+            if event.angleDelta().y() > 0:
+                scale_factor = 1.25
+            else:
+                scale_factor = 0.8
+            self.tournamentView.scale(scale_factor, scale_factor)
+            return True
+        return super().eventFilter(source, event)
+
     def startMatch(self):
-        self.arena.game_manager.reload()
+        self.arena.game_manager.reload_and_start()
 
     def testwin(self):
         players = (self.tournamentManager.tournament.current.player1, self.tournamentManager.tournament.current.player2)
@@ -194,7 +220,7 @@ class TournamentWindow(Ui_Tournament, QWidget):
     def select_and_load_tournament(self):
         """Open tournament file selector and load the selected file"""
         path = QFileDialog.getOpenFileName(
-            self, "Select tournament", self.TOURNAMENTS_DIR, "Tournament File (*.yaml, *.txt)"
+            self, "Select tournament", self.TOURNAMENTS_DIR, "Tournament Files (*.yaml *.txt);;YAML Files (*.yaml);;Text Files (*.txt);;All Files (*)"
         )
 
         if path is None:
@@ -338,7 +364,7 @@ class TournamentWindow(Ui_Tournament, QWidget):
         rows = 1
         max_rows = 1
 
-        # --- Winners Bracket -----------------------------------------------------
+        # --- Winners Bracket ---
         if "winner" in t.brackets:
             wb = t.brackets["winner"]
             for col, rnd in enumerate(wb.rounds):
@@ -361,8 +387,8 @@ class TournamentWindow(Ui_Tournament, QWidget):
         else:
             wb_width = 0
 
-        # --- Losers Bracket ------------------------------------------------------
-        # On place le LB en dessous du WB avec un gros offset vertical
+        # --- Losers Bracket ---
+
         max_matches_in_wb = max_rows - 1
         lb_vertical_offset = (max_matches_in_wb + 2) * y_spacing
 
@@ -381,10 +407,9 @@ class TournamentWindow(Ui_Tournament, QWidget):
         else:
             lb_width = 0
 
-        # --- Grand Finals --------------------------------------------------------
+        # --- Grand Finals ---
         gf = t.grand_finals
 
-        # colonne après le plus large bracket
         gf_col = max(wb_width, lb_width)
         self.gf_x = gf_col
         self.gf_y = top_margin + max_matches_in_wb * y_spacing
@@ -407,8 +432,6 @@ class TournamentWindow(Ui_Tournament, QWidget):
 
         self.draw_lines()
 
-
-        # Ajuste les bounds de la scène pour occuper toute la view
         self.tournament_scene.setSceneRect(self.tournament_scene.itemsBoundingRect())
 
     def addGFMatch(self, mat: Match):

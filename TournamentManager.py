@@ -181,6 +181,8 @@ class Tournament:
     current: Match = None
     last: Match = None
 
+    won: bool = False
+
     arena: QWidget = None
     view: QWidget = None
 
@@ -225,12 +227,18 @@ class Tournament:
         self.grand_finals.matches.append(mat)
 
         self.view.addGFMatch(mat)
+
+    def checkTournamentWin(self):
+        if self.current.is_grand_final and ( ( self.current.id == "GF2" and self.current.winner is not None ) or self.current.winner is self.current.player1 ):
+            self.won = True
         
     def setWinnerAndNext(self, player: Player):
         self.current.setWinner(player)
 
         if self.current.is_grand_final and self.grand_finals.reset and len(self.grand_finals.matches) < 2 and self.current.winner is self.current.player2:
             self.GFReset()
+
+        self.checkTournamentWin()
         
         idx = self.ordered_matches.index(self.current) + 1
 
@@ -266,6 +274,7 @@ class Tournament:
     def reset(self):
         self.current = self.all_matches["W1"]
         self.last = None
+        self.won = False
 
         wb_rounds = self.brackets["winner"].rounds
         lb_rounds = self.brackets["loser"].rounds
@@ -536,7 +545,11 @@ class Tournament:
 
         last, current = Tournament._get_current_match(ordered)
         
-        return Tournament(name, type, brackets, players, grand_finals, all_matches, ordered, current, last)
+        tournament = Tournament(name, type, brackets, players, grand_finals, all_matches, ordered, current, last)
+        
+        tournament.checkTournamentWin()
+
+        return tournament
 
 
     @staticmethod
