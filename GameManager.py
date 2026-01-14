@@ -439,14 +439,14 @@ class GameManager:
         self.arena.reloadBoard.click()
         self.arena.setup_players()
 
+        self.tournament_manager.tournament.set_bots()
+
         self.arena.show_timed_message(
             f"Next match: {self.tournament_manager.tournament.current.player1.name} (White) vs "
             f"{self.tournament_manager.tournament.current.player2.name} (Black)",
             "Tournament Match",
             duration=3000
         )
-
-        self.tournament_manager.tournament.set_bots()
 
     def reload_and_start(self):
         """Resets the board and UI and starts the next tournament match"""
@@ -481,15 +481,16 @@ class GameManager:
         current_color = self.current_player_color
         if self.tournament_mode and not manual:
             tournament = self.tournament_manager.tournament
-            tournament.set_winner_and_next(tournament.current.player1 if current_color == "w" else tournament.current.player2)
 
-        if self.tournament_mode and not self.tournament_manager.tournament.won:
             player_name = (
                 self.tournament_manager.tournament.current.player1.name
-                if self.current_player_color == "White"
+                if self.current_player_color == "w"
                 else self.tournament_manager.tournament.current.player2.name
             )
             self.arena.show_timed_message(
                 f"{color_name} player - {player_name} - won the match", "End of game"
             )
+            tournament.set_winner_and_next(tournament.current.player1 if current_color == "w" else tournament.current.player2)
+
+        if self.tournament_mode and not self.tournament_manager.tournament.won:
             QTimer.singleShot(5000, self.reload_and_start)
