@@ -273,6 +273,7 @@ class GameManager:
         if self.auto_playing:
             self.nbr_turn_to_play -= 1
             if self.nbr_turn_to_play <= 0:
+                self.arena.show_message(f"No more moves to play in the budget", "End of moves budget")
                 self.stop()
             else:
                 self.next()
@@ -319,6 +320,7 @@ class GameManager:
             print("Already stopped")
             return
         self.auto_playing = False
+
 
     def update_start_button(self, playing: bool):
         """
@@ -437,6 +439,13 @@ class GameManager:
         self.arena.reloadBoard.click()
         self.arena.setup_players()
 
+        self.arena.show_timed_message(
+            f"Next match: {self.tournament_manager.tournament.current.player1.name} (White) vs "
+            f"{self.tournament_manager.tournament.current.player2.name} (Black)",
+            "Tournament Match",
+            duration=3000
+        )
+
         self.tournament_manager.tournament.set_bots()
 
     def reload_and_start(self):
@@ -467,9 +476,6 @@ class GameManager:
         self.game_end(color_name, False)
 
     def game_end(self, color_name, manual: bool):
-        self.arena.show_message(
-            f"{color_name} player won the match", "End of game"
-        )
 
         self.stop()
         current_color = self.current_player_color
@@ -478,4 +484,12 @@ class GameManager:
             tournament.set_winner_and_next(tournament.current.player1 if current_color == "w" else tournament.current.player2)
 
         if self.tournament_mode and not self.tournament_manager.tournament.won:
+            player_name = (
+                self.tournament_manager.tournament.current.player1.name
+                if self.current_player_color == "White"
+                else self.tournament_manager.tournament.current.player2.name
+            )
+            self.arena.show_timed_message(
+                f"{color_name} player - {player_name} - won the match", "End of game"
+            )
             QTimer.singleShot(5000, self.reload_and_start)

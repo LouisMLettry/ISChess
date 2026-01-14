@@ -850,12 +850,13 @@ class Tournament:
 
 class TournamentManager:
     TOURNAMENT_DIRECTORY = os.path.join(os.path.abspath(os.path.dirname(__file__)), "Data", "tournaments")
-    DEFAULT_TOURNAMENT = os.path.join(TOURNAMENT_DIRECTORY, "double_elimination.txt")
+    DEFAULT_TOURNAMENT = os.path.join(TOURNAMENT_DIRECTORY, "tournament_setup.txt")
 
     def __init__(self) -> None:
         self.tournament: Tournament = None 
         self.path: Optional[str] = None
-        self.load_file(self.DEFAULT_TOURNAMENT)
+        if os.path.exists(self.DEFAULT_TOURNAMENT):
+            self.load_file(self.DEFAULT_TOURNAMENT)
 
     def load_file(self, path):
         if path.strip() == "":

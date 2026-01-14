@@ -307,9 +307,22 @@ class ChessArena(Ui_MainWindow, QMainWindow):
         :param title: The modal's title
         """
         self.msg_box = QMessageBox(self)
+
+        font = QtGui.QFont() 
+        font.setPointSize(36)
+        font.setBold(True)
+        self.msg_box.setFont(font)
+
         self.msg_box.setWindowTitle(title)
         self.msg_box.setText(message)
         self.msg_box.open()
+
+        return self.msg_box
+    
+    def show_timed_message(self, message: str, title: str = "Message", duration: int = 3000):
+        msg_box = self.show_message(message, title)
+        QTimer.singleShot(duration, msg_box.close)
+        return msg_box
 
     def show_status(self, message: str, duration: int = 3000):
         """
