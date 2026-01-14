@@ -181,6 +181,36 @@
            </widget>
           </widget>
          </item>
+         <item>
+          <layout class="QHBoxLayout" name="botWinButtons">
+           <item>
+            <widget class="QPushButton" name="whiteBotWins">
+             <property name="toolTip">
+              <string>Declare White Bot as Winner</string>
+             </property>
+             <property name="statusTip">
+              <string>Declare White Bot as Winner</string>
+             </property>
+             <property name="text">
+              <string>White Bot Wins</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="blackBotWins">
+             <property name="toolTip">
+              <string>Declare Black Bot as Winner</string>
+             </property>
+             <property name="statusTip">
+              <string>Declare Black Bot as Winner</string>
+             </property>
+             <property name="text">
+              <string>Black Bot Wins</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
         </layout>
        </widget>
       </item>
@@ -362,6 +392,7 @@
     <property name="title">
      <string>&amp;Game</string>
     </property>
+    <addaction name="actionTournamentMode"/>
     <addaction name="actionStart"/>
     <addaction name="actionUndo"/>
     <addaction name="actionRedo"/>
@@ -433,6 +464,20 @@
     <string>Ctrl+E</string>
    </property>
   </action>
+  <action name="actionTournamentMode">
+   <property name="text">
+    <string>Tournament</string>
+   </property>
+   <property name="toolTip">
+    <string>Enter tournament mode</string>
+   </property>
+   <property name="statusTip">
+    <string>Enter tournament mode</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+0</string>
+   </property>
+  </action>
   <action name="actionStart">
    <property name="text">
     <string>&amp;Start/Stop</string>
@@ -494,6 +539,8 @@
   <tabstop>copyBoard</tabstop>
   <tabstop>exportBoard</tabstop>
   <tabstop>botsScrollArea</tabstop>
+  <tabstop>whiteBotWins</tabstop>
+  <tabstop>blackBotWins</tabstop>
   <tabstop>prevMove</tabstop>
   <tabstop>startStop</tabstop>
   <tabstop>nextMove</tabstop>

@@ -1,0 +1,63 @@
+
+tournament:
+  name: "Double Elimination Test"
+  type: double_elimination
+
+players:
+  - { id: 1, name: "Alice" }
+  - { id: 2, name: "Bob" }
+  - { id: 3, name: "Charlie" }
+  - { id: 4, name: "Daisy" }
+
+brackets:
+  winner:
+    rounds:
+      - round: 1
+        matches:
+          - id: W1
+            player1: 1
+            player2: 2
+            winner: 0
+            bye: false
+
+          - id: W2
+            player1: 3
+            player2: 4
+            winner: 0
+            bye: false
+
+      - round: 2
+        matches:
+          - id: W3
+            player1_from: winner:W1
+            player2_from: winner:W2
+            winner: 0
+            bye: false
+
+  loser:
+    rounds:
+      - round: 1
+        matches:
+          - id: L1
+            player1_from: loser:W1
+            player2_from: loser:W2
+            winner: 0
+            bye: false
+
+      - round: 2
+        matches:
+          - id: L2
+            player1_from: winner:L1
+            player2_from: loser:W3
+            winner: 0
+            bye: false
+
+grand_finals:
+  matches:
+    - id: GF1
+      player1_from: winner:W3
+      player2_from: winner:L2
+      winner: 0
+      bye: false
+
+  reset: true

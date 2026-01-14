@@ -23,6 +23,8 @@ from ParallelPlayer import *
 from Piece import Piece
 from PieceManager import PieceManager
 
+from Tournament import TournamentWindow
+
 from Bots import *
 
 
@@ -46,10 +48,17 @@ class ChessArena(Ui_MainWindow, QMainWindow):
     START_ICON = QtGui.QIcon.fromTheme("media-playback-start")
     STOP_ICON = QtGui.QIcon.fromTheme("media-playback-stop")
 
+    tournament = None
+
     def __init__(self):
         super().__init__()
 
         uic.loadUi("Data/UI.ui", self)
+
+        if self.tournament is None:
+            self.tournament = TournamentWindow(self)
+
+        self.msg_box: Optional[QMessageBox] = None
 
         # Render for chess board
         self.chess_scene = QtWidgets.QGraphicsScene()
@@ -72,9 +81,13 @@ class ChessArena(Ui_MainWindow, QMainWindow):
         self.actionExport.triggered.connect(self.export_board)
 
         # Game actions
+        self.actionTournamentMode.triggered.connect(self.tournament_mode)
         self.actionUndo.triggered.connect(self.game_manager.undo_move)
         self.actionStart.triggered.connect(self.game_manager.start_stop)
         self.actionRedo.triggered.connect(self.game_manager.redo_move)
+        
+        self.whiteBotWins.clicked.connect(self.manual_white_win)
+        self.blackBotWins.clicked.connect(self.manual_black_win)
 
         self.movesList.resizeColumnsToContents()
 
@@ -236,6 +249,26 @@ class ChessArena(Ui_MainWindow, QMainWindow):
 
         QTimer.singleShot(1, resize)
 
+    def tournament_mode(self):
+        self.tournament.show()
+        self.game_manager.start_tournament_mode(self.tournament.tournament_manager)
+
+        self.tournament.tournament_manager.tournament.set_bots()
+
+    def manual_white_win(self):
+        if self.game_manager.tournament_mode:
+            t = self.tournament.tournament_manager.tournament
+            t.set_winner_and_next(t.current.player1)
+
+        self.game_manager.game_end(PieceManager.COLOR_NAMES["w"], True)
+
+    def manual_black_win(self):
+        if self.game_manager.tournament_mode:
+            t = self.tournament.tournament_manager.tournament
+            t.set_winner_and_next(t.current.player2)
+
+        self.game_manager.game_end(PieceManager.COLOR_NAMES["b"], True)
+
     def start(self):
         """Set up a new game"""
         self.setup_board()
@@ -273,10 +306,10 @@ class ChessArena(Ui_MainWindow, QMainWindow):
         :param message: The message to display
         :param title: The modal's title
         """
-        msgbox = QMessageBox(self)
-        msgbox.setWindowTitle(title)
-        msgbox.setText(message)
-        msgbox.open()
+        self.msg_box = QMessageBox(self)
+        self.msg_box.setWindowTitle(title)
+        self.msg_box.setText(message)
+        self.msg_box.open()
 
     def show_status(self, message: str, duration: int = 3000):
         """

@@ -24,12 +24,15 @@ If you would like to share modifications to improve the GUI, don't hesitate to s
 - [`Data/`](Data): neutral assets location 
    - [`maps/`](Data/maps): example boards which can be loaded
    - [`assets/`](Data/assets): location of needed images and other assets
+   - [`tournaments/`](Data/tournaments): example tournaments can be loaded
    - [`UI.ui`](Data/UI.ui): GUI file from QtDesigner
 - [`Bots/`](Bots): contains the global list of bots ([`ChessBotList.py`](Bots/ChessBotList.py)) as well as an example pawn moving bot ([`BaseChessBot.py`](Bots/BaseChessBot.py))
 - [`main.py`](main.py): Main execution point
 - [`ParallelPlayer.py`](ParallelPlayer.py): Threaded wrapper for bot execution
 - [`ChessRules.py`](ChessRules.py): Basic custom chess rules and verification
-- [`ChessArena.py`](ChessArena.py): Actual GUI
+- [`ChessArena.py`](ChessArena.py): Primary GUI
+- [`Tournament.py`](Tournament.py): Tournament GUI
+- [`TournamentManager.py`](TournamentManager.py): Tournament algorithms
 - other internal classes to run the game
 
 # Libraries
