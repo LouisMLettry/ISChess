@@ -13,7 +13,6 @@ from ParallelPlayer import ParallelTurn
 from Piece import Piece
 from PieceManager import PieceManager
 from Player import Player
-from TournamentManager import TournamentManager
 
 if TYPE_CHECKING:
     from ChessArena import ChessArena
@@ -50,8 +49,6 @@ class GameManager:
     def __init__(self, arena: ChessArena):
         self.arena: ChessArena = arena
         self.board_manager: BoardManager = BoardManager()
-        self.tournament_manager: TournamentManager = None
-        self.tournament_mode = False
         self.players: list[Player] = []
         self.turn: int = 0
         self.nbr_turn_to_play: int = 0
@@ -65,13 +62,6 @@ class GameManager:
         self.timeout.timeout.connect(lambda: self.end_turn(forced=True))
         self.min_wait = QTimer()
         self.min_wait.timeout.connect(self.end_if_finished)
-
-    def start_tournament_mode(self, tournament_manager: TournamentManager):
-        """Set tournament mode on"""
-        self.tournament_mode = True
-        self.tournament_manager = tournament_manager
-
-        self.arena.autoMovesCount.setValue(99)
 
     def reset(self):
         """Reset the game"""
@@ -284,15 +274,8 @@ class GameManager:
         """
         Start a series of turns
 
-        :return: ``True`` if successful, ``False`` if the number of turns to play is <= 0, if already autoplaying or
-        if tournament mode is on and the tournament has already ended.
+        :return: ``True`` if successful, ``False`` if the number of turns to play is <= 0 or if already autoplaying
         """
-        if self.tournament_mode and self.tournament_manager.tournament.won:
-            self.arena.show_message(
-                f"Cannot start auto-playing, tournament has already been won."
-            )
-            return False
-
         self.nbr_turn_to_play = self.arena.autoMovesCount.value()
         if self.nbr_turn_to_play <= 0:
             self.arena.show_message(
@@ -430,37 +413,6 @@ class GameManager:
 
         return True
 
-    def reload(self):
-        """Resets the board and UI for the next tournament match"""
-        
-        if self.auto_playing:
-            self.stop()
-
-        self.arena.reloadBoard.click()
-        self.arena.setup_players()
-
-        self.tournament_manager.tournament.set_bots()
-
-        self.arena.show_timed_message(
-            f"Next match: {self.tournament_manager.tournament.current.player1.name} (White) vs "
-            f"{self.tournament_manager.tournament.current.player2.name} (Black)",
-            "Tournament Match",
-            duration=3000
-        )
-
-    def reload_and_start(self):
-        """Resets the board and UI and starts the next tournament match"""
-
-        if self.arena.msg_box is not None:
-            self.arena.msg_box.close()
-            self.arena.msg_box = None
-
-        if self.auto_playing:
-            self.stop()
-
-        self.reload()
-        self.start()
-
     def check_game_end(self):
         board = self.current_player_board
         current_color = self.current_player_color
@@ -471,26 +423,10 @@ class GameManager:
                     return
 
         color_name: str = PieceManager.COLOR_NAMES[current_color]
-        print(f"color : {current_color}")
-        
-        self.game_end(color_name, False)
+        self.game_end(color_name)
 
-    def game_end(self, color_name, manual: bool):
-
+    def game_end(self, color_name: str):
+        self.arena.show_message(
+            f"{color_name} player won the match", "End of game"
+        )
         self.stop()
-        current_color = self.current_player_color
-        if self.tournament_mode and not manual:
-            tournament = self.tournament_manager.tournament
-
-            player_name = (
-                self.tournament_manager.tournament.current.player1.name
-                if self.current_player_color == "w"
-                else self.tournament_manager.tournament.current.player2.name
-            )
-            self.arena.show_timed_message(
-                f"{color_name} player - {player_name} - won the match", "End of game"
-            )
-            tournament.set_winner_and_next(tournament.current.player1 if current_color == "w" else tournament.current.player2)
-
-        if self.tournament_mode and not self.tournament_manager.tournament.won:
-            QTimer.singleShot(5000, self.reload_and_start)
