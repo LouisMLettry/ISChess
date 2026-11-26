@@ -199,23 +199,6 @@
          <item>
           <layout class="QHBoxLayout" name="moveActions">
            <item>
-            <widget class="QPushButton" name="prevMove">
-             <property name="toolTip">
-              <string>Undo the last move</string>
-             </property>
-             <property name="statusTip">
-              <string>Undo the last move</string>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-             <property name="icon">
-              <iconset theme="edit-undo">
-               <normaloff>.</normaloff>.</iconset>
-             </property>
-            </widget>
-           </item>
-           <item>
             <widget class="QPushButton" name="startStop">
              <property name="toolTip">
               <string>Start/Stop the game</string>
@@ -229,23 +212,6 @@
              <property name="icon">
               <iconset theme="media-playback-start">
                <normaloff>../../../.designer/backup</normaloff>../../../.designer/backup</iconset>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="nextMove">
-             <property name="toolTip">
-              <string>Redo the next move</string>
-             </property>
-             <property name="statusTip">
-              <string>Redo the next move</string>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-             <property name="icon">
-              <iconset theme="edit-redo">
-               <normaloff>.</normaloff>.</iconset>
              </property>
             </widget>
            </item>
@@ -363,8 +329,6 @@
      <string>&amp;Game</string>
     </property>
     <addaction name="actionStart"/>
-    <addaction name="actionUndo"/>
-    <addaction name="actionRedo"/>
     <addaction name="actionQuit"/>
    </widget>
    <addaction name="menuGame"/>
@@ -447,34 +411,6 @@
     <string>Ctrl+Space</string>
    </property>
   </action>
-  <action name="actionUndo">
-   <property name="text">
-    <string>Undo</string>
-   </property>
-   <property name="toolTip">
-    <string>Undo the last move</string>
-   </property>
-   <property name="statusTip">
-    <string>Undo the last move</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Z</string>
-   </property>
-  </action>
-  <action name="actionRedo">
-   <property name="text">
-    <string>Redo</string>
-   </property>
-   <property name="toolTip">
-    <string>Redo the next move</string>
-   </property>
-   <property name="statusTip">
-    <string>Redo the next move</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Y</string>
-   </property>
-  </action>
   <action name="actionQuit">
    <property name="text">
     <string>&amp;Quit</string>
@@ -494,9 +430,7 @@
   <tabstop>copyBoard</tabstop>
   <tabstop>exportBoard</tabstop>
   <tabstop>botsScrollArea</tabstop>
-  <tabstop>prevMove</tabstop>
   <tabstop>startStop</tabstop>
-  <tabstop>nextMove</tabstop>
   <tabstop>autoMovesCount</tabstop>
   <tabstop>movesList</tabstop>
  </tabstops>
@@ -567,22 +501,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>nextMove</sender>
-   <signal>clicked()</signal>
-   <receiver>actionRedo</receiver>
-   <slot>trigger()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>884</x>
-     <y>342</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>startStop</sender>
    <signal>clicked()</signal>
    <receiver>actionStart</receiver>
@@ -590,22 +508,6 @@
    <hints>
     <hint type="sourcelabel">
      <x>797</x>
-     <y>342</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>prevMove</sender>
-   <signal>clicked()</signal>
-   <receiver>actionUndo</receiver>
-   <slot>trigger()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>711</x>
      <y>342</y>
     </hint>
     <hint type="destinationlabel">

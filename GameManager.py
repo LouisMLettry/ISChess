@@ -330,14 +330,6 @@ class GameManager:
             print("Starting")
             self.start()
 
-    def undo_move(self):
-        """Undo the last move, if any"""
-        self.arena.show_message("This feature has not been implemented yet")
-
-    def redo_move(self):
-        """Redo the next move, if any"""
-        self.arena.show_message("This feature has not been implemented yet")
-
     def apply_move(self) -> bool:
         """
         Try to apply the move chosen by the current player

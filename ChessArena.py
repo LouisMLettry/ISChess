@@ -74,9 +74,7 @@ class ChessArena(Ui_MainWindow, QMainWindow):
         self.actionExport.triggered.connect(self.export_board)
 
         # Game actions
-        self.actionUndo.triggered.connect(self.game_manager.undo_move)
         self.actionStart.triggered.connect(self.game_manager.start_stop)
-        self.actionRedo.triggered.connect(self.game_manager.redo_move)
 
         self.movesList.resizeColumnsToContents()
 
@@ -153,10 +151,6 @@ class ChessArena(Ui_MainWindow, QMainWindow):
 
                 piece.addFragmentItem(fragmentItem, QPointF(x + x_norm, y + y_norm))
             
-                # Mid
-                #fragmentItem.setPos(pos.x() + (rect.width() * (piece.cutting_number / 2)) - rect.width()/2,
-                #                    pos.y() + (rect.height() * (piece.cutting_number / 2)) - rect.height()/2)
-
                 fragmentItem.setPos(x, y)
 
                 fragmentItem.setZValue(1000);

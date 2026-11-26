@@ -1,7 +1,7 @@
 [project]
 name = "ischess"
 version = "0.1.0"
-description = "Add your description here"
+description = "Chess simulator GUI for writing and testing chess bots (ISChess project)"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

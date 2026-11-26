@@ -1,12 +1,3 @@
-
-
-def check_player_defeated(player_color, board):
-    for x in range(board.shape[0]):
-        for y in range(board.shape[1]):
-            if board[x,y] == 'k'+player_color:
-                return False
-    return True
-
 def move_is_valid(player_order, move, board):
     player_color = player_order[1]
     player_team = int(player_order[0])
@@ -99,7 +90,6 @@ def move_is_valid(player_order, move, board):
             return False
         
         #   Capture ?
-        print(team_at(end), "!=", player_team, "==", team_at(end) != player_team)
         return abs(end[1] - start[1]) == 1 and (not is_free(end)) and team_at(end) != player_team
     elif piece.type == 'n':
         dx = abs(end[0] - start[0])
