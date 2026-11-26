@@ -33,8 +33,17 @@ If you would like to share modifications to improve the GUI, don't hesitate to s
 - other internal classes to run the game
 
 # Libraries
-This software requires python 3.10+ together with two libraries:
+This software requires python 3.11+ together with two libraries:
 - Numpy
 - PyQt6
+
+# Installation and launch
+Dependencies are managed with [uv](https://docs.astral.sh/uv/getting-started/installation/).
+From the repository root:
+```bash
+uv sync           # install python and the dependencies
+uv run main.py    # launch the game
+```
+The game must be launched from the repository root, as it loads its files from `Data/`.
 
 ![ISC Logo inline (preferred)](https://github.com/LouisMLettry/ISChess/assets/114392644/799c6157-3088-4b0b-be09-ac805a2bd024)
