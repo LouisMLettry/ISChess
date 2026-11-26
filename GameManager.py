@@ -56,7 +56,6 @@ class GameManager:
         self.current_player_next_move = None
         self.current_player_color = None
         self.current_player_board = None
-        self.player_finished: bool = False
         self.auto_playing: bool = False
         self.timeout = QTimer()
         self.timeout.timeout.connect(lambda: self.end_turn(forced=True))
@@ -115,8 +114,6 @@ class GameManager:
         tile_width = self.arena.white_square.size().width()
         tile_height = self.arena.white_square.size().width()
 
-        self.player_finished = False
-
         self.current_player_color = player.color
         self.current_player_board = np.rot90(board, int(sequence[2]))
 
@@ -141,7 +138,6 @@ class GameManager:
         )
 
         self.current_player.setTerminationEnabled(True)
-        self.current_player.finished.connect(self.on_player_finished)
         self.current_player.start()
 
         # Timer to call
@@ -195,13 +191,11 @@ class GameManager:
         self.end_turn(forced=False, manual_move=move)
 
 
-    def on_player_finished(self):
-        """Callback called by the player when it has finished playing"""
-        self.player_finished = True
-
     def end_if_finished(self):
         """Callback called after a minimum waiting time to end the turn if the player has already finished playing"""
-        if self.player_finished:
+        # Check the current thread itself: a "finished" signal from an older, timed-out
+        # thread could otherwise end the current player's turn too early
+        if self.current_player is not None and self.current_player.isFinished():
             self.end_turn()
 
     def end_turn(self, forced: bool = False, manual_move=None) -> bool:
@@ -245,11 +239,12 @@ class GameManager:
 
         self.min_wait.stop()
         self.timeout.stop()
+        # Only kill the thread on timeout: killing a thread that is already ending
+        # can leave a Qt lock held and freeze the whole UI
         if forced:
             print("Player took too long, terminating thread")
-
-        self.current_player.terminate()
-        self.current_player.quit()
+            self.current_player.terminate()
+            self.current_player.quit()
 
         self.apply_move()
 
